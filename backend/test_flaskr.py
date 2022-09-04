@@ -184,20 +184,37 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_get_quiz_question_all_category(self):
         self.quiz_input = {'previous_questions':[1], 'quiz_category':{'id':'0'}}
-        res=self.client().post("/quizzes", json=self.quiz_input)
+        #to be updated when updating previous_questions list above
+        prev_ques_count = 1
 
+        res=self.client().post("/quizzes", json=self.quiz_input)
+        question_count = Question.query.count()
         data=json.loads(res.data)
+
+        if(prev_ques_count == question_count):
+            self.assertEqual(data["question"], None)
+        else:
+            self.assertTrue(data["question"])
+
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(data["question"])
         self.assertEqual(data["success"], True)
 
     def test_get_quiz_question_given_category(self):
-        self.quiz_input = {'previous_questions':[1], 'quiz_category':{'id':'1'}}
+        self.quiz_input = {'previous_questions':[20,21], 'quiz_category':{'id':'1'}}
+        #to be updated when updating previous_questions list above
+        prev_ques_count = 1
+
         res=self.client().post("/quizzes", json=self.quiz_input)
+        question_count = Question.query.filter(Question.category == '1').count()
 
         data=json.loads(res.data)
+
+        if(prev_ques_count == question_count):
+            self.assertEqual(data["question"], None)
+        else:
+            self.assertTrue(data["question"])
+
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(data["question"])
         self.assertEqual(data["success"], True)
 
     def test_get_400_quiz_question_without_category(self):

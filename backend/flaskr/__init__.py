@@ -23,8 +23,8 @@ def create_app(test_config=None):
         return response
 
     #Pagiantion logic
-    def paginate_qns(request, questions):
-        page = request.args.get("page", 1, type=int)
+    def paginate_qns(myrequest, questions):
+        page = myrequest.args.get("page", 1, type=int)
         start = (page - 1) * QUESTIONS_PER_PAGE
         end = start + QUESTIONS_PER_PAGE
         qns = [qn.format() for qn in questions]
@@ -40,7 +40,7 @@ def create_app(test_config=None):
             for category in categories:
                 dict_of_categories[category.id]=category.type
             return dict_of_categories
-        except:
+        except Exception:
             abort(404)
 
     @app.route('/categories', methods=['GET'])
@@ -80,7 +80,7 @@ def create_app(test_config=None):
             return jsonify({'success': True,
             'deleted':qn_id,
             'total_questions': Question.query.count() })
-        except:
+        except Exception:
             db.session.rollback()
             return jsonify({'success': False,
             'deleted':None,
@@ -95,8 +95,8 @@ def create_app(test_config=None):
 
     #POST or Search question
 
-    def post_or_search_questions_helper(request):
-        body = request.get_json()
+    def post_or_search_questions_helper(myrequest):
+        body = myrequest.get_json()
         question = body.get("question", None)
         answer = body.get("answer", None)
         difficulty = body.get("difficulty", None)
@@ -109,7 +109,7 @@ def create_app(test_config=None):
                 ques_list = Question.query.order_by(Question.id).filter(
                     Question.question.ilike("%{}%".format(searchkey))
                 )
-                current_questions = paginate_qns(request, ques_list)
+                current_questions = paginate_qns(myrequest, ques_list)
                 return jsonify(
                     {
                         "success": True,
@@ -123,7 +123,7 @@ def create_app(test_config=None):
                 question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
                 question.insert()
                 question_list = Question.query.order_by(Question.id).all()
-                current_qns = paginate_qns(request, question_list)
+                current_qns = paginate_qns(myrequest, question_list)
 
                 return jsonify(
                     {
@@ -133,7 +133,7 @@ def create_app(test_config=None):
                         "total_questions": len(Question.query.all()),
                     }
                 )
-        except:
+        except Exception:
             abort(422)
 
 
@@ -156,7 +156,7 @@ def create_app(test_config=None):
                         'current_category':curr_category.type
                     }
                 )
-        except:
+        except Exception:
             abort(404)
 
 
@@ -167,9 +167,9 @@ def create_app(test_config=None):
 
     #Play Quiz
     
-    def quiz_helper(request):
+    def quiz_helper(myrequest):
         try:
-            body = request.get_json()
+            body = myrequest.get_json()
             previous_questions = body.get("previous_questions", None)
             if previous_questions is None:
                 abort(400)
@@ -177,16 +177,16 @@ def create_app(test_config=None):
             if quiz_category is None:
                 abort(400)
             categ = quiz_category['id']
-            if(categ == 0):
-                qn = Question.query.filter(~Question.id.in_(previous_questions)).order_by(func.random()).first()
+            if(categ == '0'):
+                my_question = Question.query.filter(~Question.id.in_(previous_questions)).order_by(func.random()).first()
             else:
-                qn = Question.query.filter(Question.category == categ, ~Question.id.in_(previous_questions)).order_by(func.random()).first()
-            qn_final = qn if (qn==None) else qn.format()
+                my_question = Question.query.filter(Question.category == categ, ~Question.id.in_(previous_questions)).order_by(func.random()).first()
+            qn_final = my_question if (my_question is None) else my_question.format()
             
             return jsonify({
                 'success':True,
                 'question':qn_final})
-        except:
+        except Exception:
             abort(400)
 
 
@@ -195,11 +195,7 @@ def create_app(test_config=None):
         return quiz_helper(request)
 
 
-    """
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
+    # error handing
 
     @app.errorhandler(404)
     def not_found(error):
