@@ -177,7 +177,7 @@ def create_app(test_config=None):
             if quiz_category is None:
                 abort(400)
             categ = quiz_category['id']
-            if(categ == '0'):
+            if(int(categ) == 0):
                 my_question = Question.query.filter(~Question.id.in_(previous_questions)).order_by(func.random()).first()
             else:
                 my_question = Question.query.filter(Question.category == categ, ~Question.id.in_(previous_questions)).order_by(func.random()).first()
